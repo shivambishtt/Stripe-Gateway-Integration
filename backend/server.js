@@ -6,6 +6,7 @@ import Stripe from "stripe"
 const app = express()
 app.use(express.json())
 app.use(cors())
+
 dotenv.config({
     path:".env"
 })
@@ -13,34 +14,30 @@ export const PORT= process.env.PORT || 9000
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 
-const customer = await stripe.customers.create({
-  email: 'rajshivam2745@gmail.com',
-})
-.then((customer)=>{
-    return stripe.invoiceItems.create({
-        customer:customer.id,
-        amount: 2500, 
-        currency: 'usd',
-        description: 'One-time setup fee',
-    })
-    .then((invoiceItem)=>{
-        return stripe.invoices.create({
-            collection_method:"send_invoice",
-            customer:invoiceItem.customer,
-        })
-    })
-    .then((invoice)=>{
-        //new invoice created
-    })
-    .catch((error)=>{
-        console.log(error);
-        
-    })
+
+app.post("/create-intent",async (req,res)=>{
+    try {
+        const {amount}=  req.body
+
+        const paymentIntent= await stripe.paymentIntents.create({
+                amount,
+                currency:"usd",
+                automatic_payment_methods:{enabled:true}
+            })
+            return res.status(200).json({client_secret:paymentIntent.client_secret})
+    } catch (error) {
+            console.log(`Internal Error` ,error);
+            return res
+            .json(`Internal Server Error: ${error}`)
+            .status(500)
+            
+    }
 })
 
-app.get("/create-intent",(req,res)=>{
-    res.send("Payment intent")
-})
+app.get("/", (req, res) => {
+    res.send("Stripe backend is running...");
+  });
+
 app.listen(PORT,()=>{
     console.log(`Server is listening at port ${process.env.PORT}`);
     

@@ -10,7 +10,7 @@ function CheckoutPage({ amount }) {
     const [loading, setLoading] = useState(false)
 
     useEffect(() => {
-        fetch("/api/create-intent", {
+        fetch("http://localhost:8000/create-intent", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -22,15 +22,18 @@ function CheckoutPage({ amount }) {
                 return res.json()
             })
             .then((data) => {
-                setClientSecret(data.clientSecret)
+                console.log(data,"Data");
+                
+                setClientSecret(data.client_secret)
             })
     }, [amount])
     return (
         <div className='flex items-center text-center justify-between'>
             <form>
                 {clientSecret && <PaymentElement />}
-                <button>Pay</button>
+                {console.log(clientSecret, "client secret    ")}
             </form>
+            <button className='mt-20 bg-slate-500 px-4 border border-spacing-3'>Pay</button>
         </div>
 
     )
