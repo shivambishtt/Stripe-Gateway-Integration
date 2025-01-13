@@ -22,18 +22,55 @@ function CheckoutPage({ amount }) {
                 return res.json()
             })
             .then((data) => {
-                console.log(data,"Data");
-                
                 setClientSecret(data.client_secret)
             })
     }, [amount])
+
+    const handleFormSubmit = async (event) => {
+        event.preventDefault()
+        setLoading(true)
+
+        if (!stripe || !elements) {
+            return
+        }
+        const { error: submitError } = await elements.submit()
+        if (submitError) {
+            setErrorMessage(submitError.message)
+            setLoading(false)
+            return
+        }
+
+        const { error } = await stripe.confirmPayment({
+            elements,
+            clientSecret,
+            confirmParams: {
+                return_url: `http://localhost:8000/payment-success?amount=${amount}`
+            }
+        })
+        if (error) {
+            setErrorMessage(error.message)
+        }
+        else {
+
+        }
+        setLoading(false)
+        if (!clientSecret || !stripe || !elements) {
+            return <div>Loading...</div>
+        }
+    }
+
     return (
-        <div className='flex items-center text-center justify-between'>
-            <form>
+        <div>
+            <form onSubmit={handleFormSubmit} >
                 {clientSecret && <PaymentElement />}
-                {console.log(clientSecret, "client secret    ")}
+                {errorMessage && <div>{errorMessage}</div>}
+                <button
+                    disabled={!stripe || loading}
+                    className=' text-white w-full p-2 bg-black mt-2 rounded-md font-bold disabled:opacity-50 disabled:animate-pulse'>
+                    {!loading ? `Pay $ ${amount}` : "Processing"}
+                </button>
             </form>
-            <button className='mt-20 bg-slate-500 px-4 border border-spacing-3'>Pay</button>
+
         </div>
 
     )
